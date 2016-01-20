@@ -49,7 +49,7 @@ import io.socket.emitter.Emitter;
 import io.socket.client.IO;
 import io.socket.client.Socket;
 
-public class gdx5 extends InputAdapter implements ApplicationListener {
+public class gdx7 extends InputAdapter implements ApplicationListener {
 	SpriteBatch batch;
 	Texture img;
 	public Socket socket;
