@@ -25,6 +25,7 @@ import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.graphics.g3d.ModelBatch;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
+import com.badlogic.gdx.graphics.g3d.attributes.TextureAttribute;
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
 import com.badlogic.gdx.graphics.g3d.loader.ObjLoader;
 import com.badlogic.gdx.graphics.g3d.utils.AnimationController;
@@ -45,6 +46,9 @@ import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
 
 import org.json.*;
+
+import javax.management.Attribute;
+
 import io.socket.emitter.Emitter;
 import io.socket.client.IO;
 import io.socket.client.Socket;
@@ -55,9 +59,19 @@ public class gdx7 extends InputAdapter implements ApplicationListener {
 	public Socket socket;
 	protected Stage stage;
 
-	public static class GameObject extends ModelInstance {
+	public static class GameObject extends ModelInstance{
+		public AnimationController ctrl;
 		public final Vector3 center = new Vector3();
 		public final Vector3 dimensions = new Vector3();
+		public float velocidad = 7f;
+		public float vx = 0f;
+		public float vy = 0f;
+		public float x0 = 0f;
+		public float y0 = 0f;
+		public float x1 = 0f;
+		public float y1 = 0f;
+		public float t = 0f;
+
 		public final float radius;
 		public String name;
 
@@ -78,6 +92,8 @@ public class gdx7 extends InputAdapter implements ApplicationListener {
 			radius = dimensions.len() / 2f;
 		}
 	}
+
+	private float delta = 0;
 
 	private int selected = -1, selecting = -1;
 	private Material selectionMaterial;
@@ -109,7 +125,7 @@ public class gdx7 extends InputAdapter implements ApplicationListener {
 	public Array<GameObject> instances = new Array<GameObject>();
 
 	public AnimationController controller;
-	public String nameUser = "Jose";
+	public String nameUser = "Nick";
 
 	/*buttons*/
 	private TextureAtlas buttonsAtlas;
@@ -118,7 +134,8 @@ public class gdx7 extends InputAdapter implements ApplicationListener {
 	private TextButton buttonConnect;
 
 	private boolean mostrarTeclado = false;
-
+	private double distT=0;
+	public Texture redTexture;
 	@Override
 	public void create() {
 		stage = new Stage();
@@ -292,7 +309,7 @@ public class gdx7 extends InputAdapter implements ApplicationListener {
 		 */
 		// instance = new ModelInstance(model);
 		assets = new AssetManager();
-		assets.load("ch.g3dj", Model.class);
+		assets.load("burbu.g3dj", Model.class);
 
 		// assets.load("ship.g3db", Model.class);
 		// model = assets.get("ship.g3db", Model.class);
@@ -300,6 +317,9 @@ public class gdx7 extends InputAdapter implements ApplicationListener {
 		selectionMaterial = new Material();
 		selectionMaterial.set(ColorAttribute.createDiffuse(Color.ORANGE));
 		originalMaterial = new Material();
+
+
+		redTexture = new Texture(Gdx.files.internal("burbu2.jpg"));
 
 		camController = new CameraInputController(cam);
 		Gdx.input.setInputProcessor(new InputMultiplexer(this, camController));
@@ -320,6 +340,8 @@ public class gdx7 extends InputAdapter implements ApplicationListener {
 		if (selecting < 0)
 			return false;
 		if (selected == selecting) {
+			if (!instances.get(selected).name.equals(nameUser)) return true;
+
 			Ray ray = cam.getPickRay(screenX, screenY);
 			final float distance = -ray.origin.y / ray.direction.y;
 			position.set(ray.direction).scl(distance).add(ray.origin);
@@ -396,6 +418,14 @@ public class gdx7 extends InputAdapter implements ApplicationListener {
 
 		//positionAppear.add(0,1,1);
 		instance.transform.setTranslation(1f,0f,0f);
+
+
+		instance.transform.setToRotation(0,1,0,90);
+		instance.transform.scale(0.4f, 0.4f, 0.4f);
+
+		instance.ctrl = new AnimationController(instance);
+		instance.ctrl.animate("Armature|Armature|Take 001|BaseLayer", -1, 1f, null, 0.2f);
+
 		instance.name = nombre;
 		instances.add(instance);
 	}
@@ -406,14 +436,36 @@ public class gdx7 extends InputAdapter implements ApplicationListener {
 		//positionAppear.add(0,1,1);
 		instance.transform.setTranslation(x,y,z);
 		instance.name = nombre;
+		//instance.transform.setToScaling(0.001f,0.001f,0.001f);
+		instance.transform.setToRotation(0, 1, 0, 90);
+		instance.transform.scale(0.4f, 0.4f, 0.4f);
+
+		instance.ctrl = new AnimationController(instance);
+		instance.ctrl.animate("Armature|Armature|Take 001|BaseLayer", -1, 1f, null, 0.2f);
+
+		instance.x0 = x;
+		instance.y0 = z;
+
 		instances.add(instance);
 	}
 
-	private void moverObjeto(int idplayer, float x, float y, float z){
+	private void moverObjeto(int idplayer, float x, float z, float y){
 		GameObject instance = instances.get(idplayer);
 
+		float xt = x - instance.x0 ;
+		float yt = y - instance.y0 ;
+		instance.x1 = x;
+		instance.y1 = y;
+		double dist = Math.sqrt(xt * xt + yt * yt);
+		double tiempo = dist/instance.velocidad;
+
+		instance.vx = (float) (xt / tiempo);
+		instance.vy = (float) (yt / tiempo);
+
+		System.out.println("tiempo:" + tiempo + " dist:" + dist + " xt:" + xt + " yt:" + yt + " vx:" + instance.vx + " vy:" + instance.vy );
+
 		//positionAppear.add(0,1,1);
-		instance.transform.setTranslation(x, y, z);
+		//instance.transform.setTranslation(x, y, z);
 		//instance.transform.translate(x,y,z);
 
 	}
@@ -421,17 +473,29 @@ public class gdx7 extends InputAdapter implements ApplicationListener {
 	private void doneLoading() {
 		// assets.load("ship.g3db", Model.class);
 		// model = assets.get("panel.g3dj", Model.class);
-		model = assets.get("ch.g3dj", Model.class);
+		model = assets.get("burbu.g3dj", Model.class);
+
 
 		String id = model.nodes.get(0).id;
 		GameObject instance = new GameObject(model);
 
 		instance.name = nameUser;
-		// instance = new ModelInstance(model);
-		controller = new AnimationController(instance);
-		// controller.setAnimation("Idle");
-		controller.animate("Armature|Walk", -1, 1f, null, 0.2f);
+		//instance.transform.setToScaling(0.001f,0.001f,0.001f);
 
+		instance.transform.setToRotation(0,1,0,90);
+		instance.transform.scale(0.4f,0.4f,0.4f);
+		// instance = new ModelInstance(model);
+	/*	controller = new AnimationController(instance);
+		// controller.setAnimation("Idle");
+		controller.animate("Armature|Armature|Take 001|BaseLayer", -1, 1f, null, 0.2f);
+*/
+		TextureAttribute textureAttribute1 = new TextureAttribute(TextureAttribute.Diffuse, redTexture);
+
+		Material material = instance.materials.get(0);
+		material.set(textureAttribute1);
+
+		instance.ctrl = new AnimationController(instance);
+		instance.ctrl.animate("Armature|Armature|Take 001|BaseLayer", -1, 1f, null, 0.2f);
 
 		// controller.animate("Walk", -1, 1f, null, 0.2f);
 
@@ -447,6 +511,8 @@ public class gdx7 extends InputAdapter implements ApplicationListener {
 
 	@Override
 	public void render() {
+
+		delta = Gdx.graphics.getDeltaTime();
 		if (loading && assets.update())
 			doneLoading();
 		camController.update();
@@ -456,6 +522,18 @@ public class gdx7 extends InputAdapter implements ApplicationListener {
 		// controller.update(Gdx.graphics.getDeltaTime());
 		//if (Gdx.input.justTouched())
 		if (mostrarTeclado)		Gdx.input.setOnscreenKeyboardVisible(true);
+		for (final GameObject instance : instances) {
+			distT = Math.sqrt((instance.x1-instance.x0)*(instance.x1-instance.x0) + (instance.y1-instance.y0)*(instance.y1-instance.y0) );
+			if ( distT >0.2 ){
+				instance.x0 += delta*instance.vx;
+				instance.y0 += delta*instance.vy;
+				instance.transform.setTranslation(instance.x0 , 0 , instance.y0);
+			}
+			else{
+				instance.vx = 0;
+				instance.vy = 0;
+			}
+		}
 
 		modelBatch.begin(cam);
 
@@ -482,8 +560,13 @@ public class gdx7 extends InputAdapter implements ApplicationListener {
 		spriteBatch.end();
 
 		stage.draw();
-		if (model != null)
-			controller.update(Gdx.graphics.getDeltaTime());
+		//if (model != null)
+		//	controller.update(delta);
+
+		for (final GameObject instance : instances) {
+			instance.ctrl.update(delta);
+		}
+
 	}
 
 	@Override
