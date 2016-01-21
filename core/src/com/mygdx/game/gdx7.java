@@ -53,7 +53,7 @@ public class gdx7 extends InputAdapter implements ApplicationListener {
 	SpriteBatch batch;
 	Texture img;
 	public Socket socket;
-    protected Stage stage;
+	protected Stage stage;
 
 	public static class GameObject extends ModelInstance {
 		public final Vector3 center = new Vector3();
@@ -103,16 +103,16 @@ public class gdx7 extends InputAdapter implements ApplicationListener {
 	public String nameUser = "Jose";
 
 	/*buttons*/
-    private TextureAtlas buttonsAtlas; 
-    private Skin buttonSkin; 
-    private TextButton button; 
-    private TextButton buttonConnect; 
-	
-    private boolean mostrarTeclado = false; 
-    
+	private TextureAtlas buttonsAtlas;
+	private Skin buttonSkin;
+	private TextButton button;
+	private TextButton buttonConnect;
+
+	private boolean mostrarTeclado = false;
+
 	@Override
 	public void create() {
-        stage = new Stage();
+		stage = new Stage();
 		try {
 			socket = IO.socket("http://ioserver-antrax.rhcloud.com:8000");
 			//socket = IO.socket("http://192.168.0.92:8000");
@@ -122,7 +122,7 @@ public class gdx7 extends InputAdapter implements ApplicationListener {
 		socket.on(Socket.EVENT_CONNECT, new Emitter.Listener() {
 			@Override
 			public void call(Object... args) {
-				socket.emit("join", nameUser );
+				socket.emit("nick", nameUser );
 			}
 		}).on("message", new Emitter.Listener() {
 			@Override
@@ -205,54 +205,54 @@ public class gdx7 extends InputAdapter implements ApplicationListener {
 			public void call(Object... args) {
 			}
 		});
-		
-		
+
+
 		spriteBatch = new SpriteBatch();
 		font = new BitmapFont(Gdx.files.internal("data/arial-32-pad.fnt"), false);
 		font.getData().markupEnabled = true;
 		font.getData().breakChars = new char[] { '-' };
 /*start create button*/
 		buttonsAtlas = new TextureAtlas("imageButtons/buttons.pack"); //** button atlas image **// 
-	    buttonSkin = new Skin();
-	    buttonSkin.addRegions(buttonsAtlas); //** skins for on and off **//
-	    TextButtonStyle style = new TextButtonStyle(); //** Button properties **//
-        style.up = buttonSkin.getDrawable("buttonOff");
-        style.down = buttonSkin.getDrawable("buttonOn");
-        style.font = font;
-        button = new TextButton("Cambiar Login", style); //** Button text and style **//
-        button.setPosition(0, 100); //** Button location **//
-        button.setHeight(50); //** Button Height **//
-        button.setWidth(250); //** Button Width **//
-        button.addListener(new InputListener() {
-            public boolean touchDown (InputEvent event, float x, float y, int pointer, int button) {
-            		System.out.println("pressed");
-                    //Gdx.input.setOnscreenKeyboardVisible(true);
-                    //mostrarTeclado = true;
-                    return true;
-            }
-            
-            public void touchUp (InputEvent event, float x, float y, int pointer, int button) {
-                    System.out.println("touch up ");
-                    Gdx.input.setOnscreenKeyboardVisible(true); 
-            }
-        });
-        buttonConnect = new TextButton("Conectar", style); //** Button text and style **//
-        buttonConnect.setPosition(0, 200); //** Button location **//
-        buttonConnect.setHeight(50); //** Button Height **//
-        buttonConnect.setWidth(250); //** Button Width **//
-        buttonConnect.addListener(new InputListener() {
-            public boolean touchDown (InputEvent event, float x, float y, int pointer, int button) {
-            		System.out.println("pressed");
-                    return true;
-            }
-            
-            public void touchUp (InputEvent event, float x, float y, int pointer, int button) {
-                    System.out.println("touch up ");
-            		socket.connect();
-            }
-        });
-        stage.addActor(button);
-        stage.addActor(buttonConnect);
+		buttonSkin = new Skin();
+		buttonSkin.addRegions(buttonsAtlas); //** skins for on and off **//
+		TextButtonStyle style = new TextButtonStyle(); //** Button properties **//
+		style.up = buttonSkin.getDrawable("buttonOff");
+		style.down = buttonSkin.getDrawable("buttonOn");
+		style.font = font;
+		button = new TextButton("Cambiar Login", style); //** Button text and style **//
+		button.setPosition(0, 200); //** Button location **//
+		button.setHeight(50); //** Button Height **//
+		button.setWidth(250); //** Button Width **//
+		button.addListener(new InputListener() {
+			public boolean touchDown (InputEvent event, float x, float y, int pointer, int button) {
+				System.out.println("pressed");
+				//Gdx.input.setOnscreenKeyboardVisible(true);
+				//mostrarTeclado = true;
+				return true;
+			}
+
+			public void touchUp (InputEvent event, float x, float y, int pointer, int button) {
+				System.out.println("touch up ");
+				Gdx.input.setOnscreenKeyboardVisible(true);
+			}
+		});
+		buttonConnect = new TextButton("Conectar", style); //** Button text and style **//
+		buttonConnect.setPosition(0, 100); //** Button location **//
+		buttonConnect.setHeight(50); //** Button Height **//
+		buttonConnect.setWidth(250); //** Button Width **//
+		buttonConnect.addListener(new InputListener() {
+			public boolean touchDown (InputEvent event, float x, float y, int pointer, int button) {
+				System.out.println("pressed");
+				return true;
+			}
+
+			public void touchUp (InputEvent event, float x, float y, int pointer, int button) {
+				System.out.println("touch up ");
+				socket.connect();
+			}
+		});
+		stage.addActor(button);
+		stage.addActor(buttonConnect);
 /*end create button*/
 		environment = new Environment();
 		environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.4f, 0.4f, 0.4f, 1f));
@@ -294,7 +294,7 @@ public class gdx7 extends InputAdapter implements ApplicationListener {
 		Gdx.input.setInputProcessor(new InputMultiplexer(this, camController));
 		//Gdx.input.setInputProcessor(camController);
 		loading = true;
-        Gdx.input.setInputProcessor(new InputMultiplexer(this, stage)); 
+		Gdx.input.setInputProcessor(new InputMultiplexer(this, stage));
 	}
 
 	@Override
@@ -420,7 +420,7 @@ public class gdx7 extends InputAdapter implements ApplicationListener {
 		controller = new AnimationController(instance);
 		// controller.setAnimation("Idle");
 		controller.animate("Armature|Walk", -1, 1f, null, 0.2f);
-	
+
 
 		// controller.animate("Walk", -1, 1f, null, 0.2f);
 
@@ -444,13 +444,13 @@ public class gdx7 extends InputAdapter implements ApplicationListener {
 		// controller.update(Gdx.graphics.getDeltaTime());
 
 		spriteBatch.begin();
-		font.draw(spriteBatch, "Usuario:" + nameUser, 000, 300, 400, Align.left, true);
+		font.draw(spriteBatch, "Usuario:" + nameUser, 0, 500, 400, Align.left, true);
 		spriteBatch.renderCalls = 0;
 		spriteBatch.end();
-		
+
 		//if (Gdx.input.justTouched())
 		if (mostrarTeclado)		Gdx.input.setOnscreenKeyboardVisible(true);
-		
+
 		modelBatch.begin(cam);
 
 		for (final GameObject instance : instances) {
@@ -463,12 +463,12 @@ public class gdx7 extends InputAdapter implements ApplicationListener {
 		// modelBatch.render(instances, environment);
 		// modelBatch.render(instance, environment);
 		modelBatch.end();
-		
+
 		stage.draw();
 		if (model != null)
 			controller.update(Gdx.graphics.getDeltaTime());
 	}
-	
+
 	@Override
 	public boolean keyTyped (char character) {
 		if (character == '\b' && nameUser.length() >= 1) {
@@ -480,7 +480,7 @@ public class gdx7 extends InputAdapter implements ApplicationListener {
 		}
 		return false;
 	}
-	
+
 	protected boolean isVisible(final Camera cam, final GameObject instance) {
 		instance.transform.getTranslation(position);
 		position.add(instance.center);
