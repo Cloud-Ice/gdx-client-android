@@ -91,11 +91,20 @@ public class gdx7 extends InputAdapter implements ApplicationListener {
 	public AssetManager assets;
 	public boolean loading;
 
+	private int widthSreen = 0;
+	private int heightSreen = 0;
+
 	private BitmapFont font;
 	private SpriteBatch spriteBatch;
 
 	private Vector3 position = new Vector3();
+
+	private Vector3 positionIns = new Vector3();
+	private Vector3 positionPros = new Vector3();
+
 	private Vector3 positionAppear = new Vector3();
+
+	private GameObject player;
 
 	public Array<GameObject> instances = new Array<GameObject>();
 
@@ -122,7 +131,7 @@ public class gdx7 extends InputAdapter implements ApplicationListener {
 		socket.on(Socket.EVENT_CONNECT, new Emitter.Listener() {
 			@Override
 			public void call(Object... args) {
-				socket.emit("nick", nameUser );
+				socket.emit("join", nameUser );
 			}
 		}).on("message", new Emitter.Listener() {
 			@Override
@@ -206,6 +215,7 @@ public class gdx7 extends InputAdapter implements ApplicationListener {
 			}
 		});
 
+		socket.emit("message","");
 
 		spriteBatch = new SpriteBatch();
 		font = new BitmapFont(Gdx.files.internal("data/arial-32-pad.fnt"), false);
@@ -259,7 +269,8 @@ public class gdx7 extends InputAdapter implements ApplicationListener {
 		environment.add(new DirectionalLight().set(0.8f, 0.8f, 0.8f, -1f, -0.8f, -0.2f));
 
 		modelBatch = new ModelBatch();
-
+		widthSreen = Gdx.graphics.getWidth();
+		heightSreen = Gdx.graphics.getHeight();
 		cam = new PerspectiveCamera(67, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 		cam.position.set(0f, 14f, -10f);
 		cam.lookAt(0, 0, 0);
@@ -428,7 +439,8 @@ public class gdx7 extends InputAdapter implements ApplicationListener {
 		// controller.animate("walk", 0);
 		// System.out.println("anim : " + controller.);
 		// Model ship = assets.get("data/ship.obj", Model.class);
-		// ModelInstance shipInstance = new ModelInstance(ship);
+		// ModelInstance shipInstance = new ModelInstance(ship)
+		player = instance;
 		instances.add(instance);
 		loading = false;
 	}
@@ -442,12 +454,6 @@ public class gdx7 extends InputAdapter implements ApplicationListener {
 		Gdx.gl.glViewport(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
 		// controller.update(Gdx.graphics.getDeltaTime());
-
-		spriteBatch.begin();
-		font.draw(spriteBatch, "Usuario:" + nameUser, 0, 500, 400, Align.left, true);
-		spriteBatch.renderCalls = 0;
-		spriteBatch.end();
-
 		//if (Gdx.input.justTouched())
 		if (mostrarTeclado)		Gdx.input.setOnscreenKeyboardVisible(true);
 
@@ -459,10 +465,21 @@ public class gdx7 extends InputAdapter implements ApplicationListener {
 			//visibleCount++;
 			//}
 		}
-
 		// modelBatch.render(instances, environment);
 		// modelBatch.render(instance, environment);
 		modelBatch.end();
+
+		spriteBatch.begin();
+		font.draw(spriteBatch, "Usuario:" + nameUser, 0,heightSreen, 400, Align.left, true);
+
+			for (final GameObject instance : instances){
+				instance.transform.getTranslation(positionIns);
+				positionPros = cam.project(positionIns);
+				font.draw(spriteBatch, instance.name, positionPros.x,positionPros.y, 200, Align.left, true);
+			}
+
+		spriteBatch.renderCalls = 0;
+		spriteBatch.end();
 
 		stage.draw();
 		if (model != null)
@@ -477,6 +494,7 @@ public class gdx7 extends InputAdapter implements ApplicationListener {
 			Gdx.input.setOnscreenKeyboardVisible(false);
 		} else {
 			nameUser += character;
+			instances.get(0).name = nameUser;
 		}
 		return false;
 	}
